@@ -198,9 +198,11 @@ public class Dialog_BillConfig_Patches
                     {
                         case Zone_Stockpile stockpile:
                             dialog.bill.includeFromZone = stockpile;
+                            extraData.LookInStorage = null;
                             break;
                         case Building_Storage b:
                             extraData.LookInStorage = b;
+                            dialog.bill.includeFromZone = null;
                             GameComponent_ExtraBillData.Instance.SetData(dialog.bill, extraData);
                             break;
                     }
