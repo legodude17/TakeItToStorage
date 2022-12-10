@@ -45,8 +45,8 @@ namespace HaulToBuilding
             var list2 = new[]
             {
                 new CodeInstruction(OpCodes.Ldloc_0),
-                new CodeInstruction(OpCodes.Ldloc_S, 5),
-                new CodeInstruction(OpCodes.Ldloca_S, 7),
+                new CodeInstruction(OpCodes.Ldloc_S, 6),
+                new CodeInstruction(OpCodes.Ldloca_S, 9),
                 new CodeInstruction(OpCodes.Call,
                     AccessTools.Method(typeof(Toils_Recipe_Patches), "FindCell")),
                 new CodeInstruction(OpCodes.Brtrue_S, label2)
