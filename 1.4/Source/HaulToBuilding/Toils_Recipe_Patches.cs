@@ -67,12 +67,11 @@ internal class Toils_Recipe_Patches
 
         if (pawn.CurJob.bill.GetStoreMode() == HaulToBuildingDefOf.Nearest)
         {
-            var slotGroup = pawn.Map.haulDestinationManager.AllGroupsListForReading.Where(group => group.parent.Accepts(things[0]))
-               .OrderBy(group => group.CellsList.Any() ? group.CellsList.Select(c => c.DistanceToSquared(pawn.Position)).Min() : float.MaxValue)
-               .FirstOrDefault();
-            if (slotGroup != null)
-                StoreUtility.TryFindBestBetterStoreCellForIn(things[0], pawn, pawn.Map, 0, pawn.Faction,
-                    slotGroup, out cell);
+            foreach (var slotGroup in pawn.Map.haulDestinationManager.AllGroupsListForReading.Where(group => group.parent.Accepts(things[0]))
+                        .OrderBy(group => group.CellsList.Any() ? group.CellsList.Select(c => c.DistanceToSquared(pawn.Position)).Min() : float.MaxValue))
+                if (StoreUtility.TryFindBestBetterStoreCellForIn(things[0], pawn, pawn.Map, 0, pawn.Faction,
+                        slotGroup, out cell))
+                    break;
             return true;
         }
 
