@@ -16,9 +16,14 @@ public class RecipeCountWorker_Patches
         harm.Patch(AccessTools.Method(typeof(RecipeWorkerCounter), "CountProducts"),
             transpiler: new HarmonyMethod(typeof(RecipeCountWorker_Patches), nameof(Transpiler)));
         if (ModLister.HasActiveModWithName("Better Workbench Management"))
+        {
             harm.Patch(
                 AccessTools.Method(AccessTools.TypeByName("ImprovedWorkbenches.RecipeWorkerCounter_CountProducts_Detour"), "CountAdditionalProducts"),
                 transpiler: new HarmonyMethod(typeof(RecipeCountWorker_Patches), nameof(Transpiler)));
+            harm.Patch(
+                AccessTools.Method(AccessTools.TypeByName("ImprovedWorkbenches.RecipeWorkerCounter_CountProducts_Detour"), "Postfix"),
+                transpiler: new HarmonyMethod(typeof(RecipeCountWorker_Patches), nameof(Transpiler_Postfix)));
+        }
     }
 
     public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
@@ -32,7 +37,7 @@ public class RecipeCountWorker_Patches
         list.InsertRange(idx1 + 2, new[]
         {
             new CodeInstruction(OpCodes.Ldarg_1),
-            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(RecipeCountWorker_Patches), "HasBuilding")),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(RecipeCountWorker_Patches), nameof(HasBuilding))),
             new CodeInstruction(OpCodes.Brtrue, label1)
         });
         var idx2 = list.FindIndex(idx1 + 1, ins => ins.LoadsField(info1));
@@ -49,8 +54,24 @@ public class RecipeCountWorker_Patches
             isCore ? new CodeInstruction(OpCodes.Ldloc_1) : new CodeInstruction(OpCodes.Ldloc_S, 5),
             new CodeInstruction(OpCodes.Ldloca_S, isCore ? 2 : 3),
             new CodeInstruction(OpCodes.Call,
-                AccessTools.Method(typeof(RecipeCountWorker_Patches), "GetContentsOfBuilding")),
+                AccessTools.Method(typeof(RecipeCountWorker_Patches), nameof(GetContentsOfBuilding))),
             new CodeInstruction(OpCodes.Brtrue, label3)
+        });
+        return list;
+    }
+
+    public static IEnumerable<CodeInstruction> Transpiler_Postfix(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        var list = instructions.ToList();
+        var info1 = AccessTools.Field(typeof(Bill_Production), "includeFromZone");
+        var idx1 = list.FindIndex(ins => ins.LoadsField(info1));
+        var label1 = (Label)list[idx1 + 1].operand;
+        list.InsertRange(idx1 + 2, new[]
+        {
+            new CodeInstruction(OpCodes.Ldarg_2),
+            new CodeInstruction(OpCodes.Ldind_Ref),
+            new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(RecipeCountWorker_Patches), nameof(HasBuilding))),
+            new CodeInstruction(OpCodes.Brtrue, label1)
         });
         return list;
     }
@@ -62,8 +83,7 @@ public class RecipeCountWorker_Patches
         var storage = GameComponent_ExtraBillData.Instance.GetData(bill).LookInStorage;
         if (storage == null) return false;
         num += storage.slotGroup.HeldThings
-           .Where(outerThing => counter.CountValidThing(outerThing.GetInnerIfMinified(), bill,
-                def))
+           .Where(outerThing => counter.CountValidThing(outerThing.GetInnerIfMinified(), bill, def))
            .Sum(outerThing => outerThing.GetInnerIfMinified().stackCount);
         return true;
     }
